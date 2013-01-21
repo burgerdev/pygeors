@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#-------------------------------------------------------------------------------
-# Name: geo.py
+
+## @package geors
+# Name: geors.py
 # Purpose: Geoinformation for DE based on opengeodb data and openstreetmap webservice
 # Author: burger@burgerdev.de
 # Created: 08.01.2013
@@ -9,7 +10,6 @@
 #	plz.db is in the public domain (thanks to opengeodb.org)
 #	full text search results are covered by the Database Contents License (DbCL) 1.0
 # Licence: GPL3, ODbL (see openstreetmap.org for details)
-#-------------------------------------------------------------------------------
 
 
 # =======================================
@@ -27,13 +27,18 @@ import xml.etree.ElementTree as etree
 from math import sin, cos, acos, radians
 import sqlite3 
 
-"""
-great circle distance
 
-input: 	latitudes and longitudes
-	radius (default: earth radius in km)
-output: distance on the surface, units as in input
-"""
+## great circle distance
+#
+# compute the great circle distance between two latitude/longitude pairs
+# @param lat1 first latitude 
+# @param lon1 first longitude
+# @param lat2 second latitude
+# @param lon2 second longitude
+# @param r radius (defalut: earth radius in km)
+# 
+# @return distance between the coordinates, units are the same as in the input
+#
 def gcd(lat1, lon1, lat2, lon2, r=6367.5):
 	lat1=radians(float(lat1))
 	lat2=radians(float(lat2))
@@ -49,6 +54,7 @@ def gcd(lat1, lon1, lat2, lon2, r=6367.5):
 from collections import Iterable
 import json
 import pprint
+import os.path
 # 
 # =======================================
 
@@ -60,68 +66,84 @@ import pprint
 # =======================================
 
 # global connection to zipcode DB 
-conn = sqlite3.connect('plz.db')
-conn.create_function("GCD", 4, gcd)
+_conn = sqlite3.connect(os.path.join(os.path.dirname( __file__ ), 'plz.db'))
+_conn.create_function("GCD", 4, gcd)
+
+## openstreetmap user agent
+# set this to your app's name
+osm_useragent = "pygeors - autocompletion"
+
+## openstreetmap email address
+# provide an email address for OSM to contact you
+osm_email = None
 
 
 
 
-"""
-geographic location object
 
-This object represents a geographic location in terms of zip codes and city limits
-(as opposed to street addresses and the like). This object prefers German locations
-at the moment.
-
-Attributes:
-	city - string
-	zipcode - string
-	state - string
-	countrycode - string
-	country - string
-	latlon - string
-
-
-Methods: 
-	complete()
-
-Basic Usage:
-
->>> g = GeoLoc()
->>> g.zipcode = "87527"
->>> g.complete()
->>> g.city
-'Sonthofen'
-
->>> g = GeoLoc()
->>> g.city = "Sonthofen"
->>> g.complete()
->>> g.zipcode
-'87527'
-
->>> g = GeoLoc()
->>> g.latlon = (47.51, 10.29)
->>> g.complete()
->>> g.zipcode
-'87527'
->>> g.city
-'Sonthofen'
-
-"""
+### geographic location object
+#
+# This object represents a geographic location in terms of zip codes and city limits
+# (as opposed to street addresses and the like). This object prefers German locations
+# at the moment.
+#
+# Basic Usage (and doctests):
+#
+#>>> g = GeoLoc()
+#>>> g.zipcode = "87527"
+#>>> g.complete()
+#>>> g.city
+#'Sonthofen'
+#
+#>>> g = GeoLoc()
+#>>> g.city = "Sonthofen"
+#>>> g.complete()
+#>>> g.zipcode
+#'87527'
+#
+#>>> g = GeoLoc()
+#>>> g.latlon = (47.51, 10.29)
+#>>> g.complete()
+#>>> g.zipcode
+#'87527'
+#>>> g.city
+#'Sonthofen'
+#
+#
 class GeoLoc(object):
-	city = None
-	zipcode = None
-	county = None
-	state = None
-	country = "Deutschland"
-	countrycode = "de"
-	latlon = None
 
-	# experimental
-	query = None
-	_alternatives = None
-	
+	## @var city
+	# the city (string, default: None)
+	## @var zipcode
+	# the zip code (string, default: None)
+	## @var county
+	# the county (string, default: None)
+	## @var state
+	# the state (string, default: None)
+	## @var country
+	# the country (string, default: "Deutschland")
+	## @var countrycode
+	# the countrycode, in most cases TLD (string, default: "de")
+	## @var latlon
+	# the city (tuple of two floats, default: None)
+
+
+	## the constructor
+	# @param tup tuple as returned by a query to geodb_zip, or dict as returned by a query to openstreetmap
+	#
 	def __init__(self, tup=None):
+		self.city = None
+		self.zipcode = None
+		self.county = None
+		self.state = None
+		self.country = "Deutschland"
+		self.countrycode = "de"
+		self.latlon = None
+		
+		# experimental
+		self._query = None
+		self._alternatives = None
+
 		if isinstance(tup, (list, tuple)):
 			# result from zipcode DB query
 			self._fromtuple(tup)
@@ -173,27 +195,30 @@ class GeoLoc(object):
 		self.zipcode = g.zipcode
 
 
-	
+	## convert to string
 	def __str__(self):
+
 		lat = self.latlon[0] if self.latlon is not None else 0
 		lon = self.latlon[1] if self.latlon is not None else 0
 		return "%s, %s" % (self.city if self.city is not None else self.county, self.state)
 		#return "%s (country=%s, zip=%s, lat=%.2f, lon=%.2f)" % (self.city if self.city is not None else self.county, self.countrycode, self.zipcode, lat, lon)
 
-	def complete(self, useosm=True):
+	## look up GeoLoc information
+	# Complete the geographic information in this GeoLoc object. Works best if the zipcode attribute is filled.
+	# @param useosm specify if openstreetmap query should be sent (this feature is experimental!)
+	def complete(self, useosm=False):
 		""" 
-		look up complete GeoLoc information
 		"""
 		
 		if self.zipcode is not None:
 			self._ziplookup()
-		elif self.city is not None or self.query is not None:
+		elif self.city is not None or self._query is not None:
 			self._citylookup()
 		elif self.latlon is not None:
 			self._reverselookup()
 
 	def _ziplookup(self):
-		cur = conn.cursor()
+		cur = _conn.cursor()
 		cur.execute("SELECT * FROM geodb_zip WHERE zip = ? LIMIT 1", (self.zipcode,))
 		res = cur.fetchone()
 		if res is not None:
@@ -206,8 +231,8 @@ class GeoLoc(object):
 		
 		# prepare query parameters
 		p = {}
-		if self.query is not None:
-			p["q"] = self.query
+		if self._query is not None:
+			p["q"] = self._query
 		if self.city is not None:
 			p["city"] = self.city
 		if self.zipcode is not None:
@@ -229,7 +254,7 @@ class GeoLoc(object):
 			self._alternatives = g[1:]
 
 	def _reverselookup(self):
-		cur = conn.cursor()
+		cur = _conn.cursor()
 		cur.execute("SELECT * FROM geodb_zip ORDER BY GCD(lat, lon, ?, ?) ASC LIMIT 1", self.latlon)
 		res = cur.fetchone()
 		if res is not None:
@@ -245,22 +270,6 @@ class GeoLoc(object):
 		
 
 
-
-def code(s):
-	"""
-	Free text search
-	
-	input: string (future: file, Iterable, ...)
-	output: Iterable of GeoLocs, None on error
-
-	tests: 
-
-	>>> code(None)
-	>>>
-	"""
-	return None
-
-	
 
 def _osmquery(d={}):
 	"""
@@ -285,23 +294,19 @@ def _osmquery(d={}):
 
 	return json.loads(x.read().decode("utf-8"))
 
+## calculate distance between GeoLocs
+# @param loc a GeoLoc obejct to start with
+# @param locs either a GeoLoc object or a list of GeoLoc objects
+# @return a float or a list of floats (depending on the input) with the distance in kilometres
+#	
+# usage (and doctests):
+#
+#>>> distance(None, None)
+#>>>
+#>>> distance(None, [None, None])
+#[None, None]
+#
 def distance(loc, locs):
-	"""
-	calculate distance between GeoLocs
-	
-	input: 	GeoLoc start, GeoLoc end
-		GeoLoc start, GeoLoc-iterable end
-	output:	distance, or None on error
-		distance-iterable with None on error
-	
-	tests:
-
-	>>> distance(None, None)
-	>>>
-
-	>>> distance(None, [None, None])
-	[None, None]
-	"""
 	
 	if not isinstance(loc, GeoLoc):
 		return [None for d in locs] if isinstance(locs,Iterable) else None
@@ -311,7 +316,7 @@ def distance(loc, locs):
 
 	ziparray = [d.zipcode for d in locs] if isinstance(locs,Iterable) else [locs.zipcode, ]
 	
-	cur = conn.cursor() 
+	cur = _conn.cursor() 
 	res = []
 	for zipcode in ziparray:
 		cur.execute("SELECT GCD(lat,lon,?,?) AS dist FROM geodb_zip WHERE zip in (?)", (lat, lon, zipcode))
@@ -324,27 +329,23 @@ def distance(loc, locs):
 	
 	return res
 
-	
+## get surrounding GeoLocs
+# @param loc a GeoLoc obejct to start with
+# @param dist a distance in kilometres to search in
+# @return a list of GeoLocs (aka cities) within the specified radius of loc
+#	
+# usage (and doctests):
+#
+#>>> area(None, 0)
+#>>> 
+#>>> g = GeoLoc([87527, "Sonthofen", None, None, "87527"])
+#>>> L = area(g,0.1)
+#>>> len(L)
+#1
+#>>> L[0].zipcode
+#'87527'
+#
 def area(loc, dist):
-	"""
-	get surrounding GeoLocs
-	
-	input: GeoLoc, distance in km
-	output: GeoLoc-iterable or None on error
-	
-	tests:
-
-	>>> area(None, 0)
-	>>> 
-
-	>>> g = GeoLoc([87527, "Sonthofen", None, None, "87527"])
-	>>> L = area(g,0.1)
-	>>> len(L)
-	1
-	>>> L[0].zipcode
-	'87527'
-	"""
-
 	if not isinstance(loc, GeoLoc):
 		return None
 
@@ -354,7 +355,7 @@ def area(loc, dist):
 	(lat, lon) = loc.latlon
 
 	try:
-		cur = conn.cursor()
+		cur = _conn.cursor()
 		cur.execute("SELECT * FROM geodb_zip WHERE GCD(lat,lon,?,?) <= ?", (lat, lon, dist))
 	except sqlite3.OperationalError as e:
 		print(e.message)
@@ -371,32 +372,32 @@ def area(loc, dist):
 
 if __name__ == "__main__":
 # testing
-	a = GeoLoc()
-	a.zipcode = "69115"
-	b = GeoLoc()
-	b.zipcode = "74906"
+	_a = GeoLoc()
+	_a.zipcode = "69115"
+	_b = GeoLoc()
+	_b.zipcode = "74906"
 
-	print("Heidelberg to Bad Rappenau: %.2fkm" % distance(a,b))
+	print("Heidelberg to Bad Rappenau: %.2fkm" % distance(_a,_b))
 
-	c = GeoLoc()
-	c.zipcode = "87527"
-	d = area(c,10)
-	e = distance(c,d)
+	_c = GeoLoc()
+	_c.zipcode = "87527"
+	_d = area(_c,10)
+	_e = distance(_c,_d)
 	print("\nZip codes near Sonthofen:")
-	for q,r in zip(d,e):
-		print("%s, %.2fkm" % (str(q), r))
+	for _q,_r in zip(_d,_e):
+		print("%s, %.2fkm" % (str(_q), _r))
 	
 	print("\nFree Text Search:")	
-	g = GeoLoc()
-	g.city = "Sonthofen"
-	g.complete()
-	print(g)
+	_g = GeoLoc()
+	_g.city = "Sonthofen"
+	_g.complete()
+	print(_g)
 
 	print("\nReverse Geocoding")
-	g = GeoLoc()
-	g.latlon = (47.5,10.3)
-	g.complete()
-	print(g)
+	_g = GeoLoc()
+	_g.latlon = (47.5,10.3)
+	_g.complete()
+	print(_g)
 
 
 

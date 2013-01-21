@@ -1,0 +1,177 @@
+\hypertarget{namespacegeors}{\section{geors Namespace Reference}
+\label{namespacegeors}\index{geors@{geors}}
+}
+
+
+Name\-: geors.\-py Purpose\-: Geoinformation for D\-E based on opengeodb data and openstreetmap webservice Author\-: \href{mailto:burger@burgerdev.de}{\tt burger@burgerdev.\-de} Created\-: 08.\-01.\-2013 Copyright\-: (c) Markus Döring 2013, plz.\-db is in the public domain (thanks to opengeodb.\-org) full text search results are covered by the Database Contents License (Db\-C\-L) 1.\-0 Licence\-: G\-P\-L3, O\-Db\-L (see openstreetmap.\-org for details)  
+
+
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \hyperlink{classgeors_1_1GeoLoc}{Geo\-Loc}
+\begin{DoxyCompactList}\small\item\em geographic location object \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+def \hyperlink{namespacegeors_a524e72573297cfd02214f0ee5c416330}{gcd}
+\begin{DoxyCompactList}\small\item\em great circle distance \end{DoxyCompactList}\item 
+def \hyperlink{namespacegeors_a250a82f910c096532544fbe6b5a3f808}{distance}
+\begin{DoxyCompactList}\small\item\em calculate distance between Geo\-Locs \end{DoxyCompactList}\item 
+def \hyperlink{namespacegeors_abf605583f4b44d3ade8ac9a0a9da63d1}{area}
+\begin{DoxyCompactList}\small\item\em get surrounding Geo\-Locs \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{namespacegeors_a8b633d071062d35496cc4c35670725de}{tuple {\bfseries \-\_\-conn} = sqlite3.\-connect(os.\-path.\-join(os.\-path.\-dirname( \-\_\-\-\_\-file\-\_\-\-\_\- ), 'plz.\-db'))}\label{namespacegeors_a8b633d071062d35496cc4c35670725de}
+
+\item 
+\hypertarget{namespacegeors_ac1a31bbbc06a9fd9bfdc8860c3a61e0c}{string \hyperlink{namespacegeors_ac1a31bbbc06a9fd9bfdc8860c3a61e0c}{osm\-\_\-useragent} = \char`\"{}pygeors -\/ autocompletion\char`\"{}}\label{namespacegeors_ac1a31bbbc06a9fd9bfdc8860c3a61e0c}
+
+\begin{DoxyCompactList}\small\item\em openstreetmap user agent set this to your app's name \end{DoxyCompactList}\item 
+\hypertarget{namespacegeors_a61e250eb73c709b7c855e9e96b0a3fcd}{\hyperlink{namespacegeors_a61e250eb73c709b7c855e9e96b0a3fcd}{osm\-\_\-email} = None}\label{namespacegeors_a61e250eb73c709b7c855e9e96b0a3fcd}
+
+\begin{DoxyCompactList}\small\item\em openstreetmap email address provide an email address for O\-S\-M to contact you \end{DoxyCompactList}\item 
+\hypertarget{namespacegeors_a2ab76ea44ea2c03066064d65ea4fb76e}{tuple {\bfseries \-\_\-a} = \hyperlink{classgeors_1_1GeoLoc}{Geo\-Loc}()}\label{namespacegeors_a2ab76ea44ea2c03066064d65ea4fb76e}
+
+\item 
+\hypertarget{namespacegeors_a9e2bf8a114400d8ee4b119082f45aebf}{tuple {\bfseries \-\_\-b} = \hyperlink{classgeors_1_1GeoLoc}{Geo\-Loc}()}\label{namespacegeors_a9e2bf8a114400d8ee4b119082f45aebf}
+
+\item 
+\hypertarget{namespacegeors_a3a65fd9ccc9e58725c7b9ffbb40081b2}{tuple {\bfseries \-\_\-c} = \hyperlink{classgeors_1_1GeoLoc}{Geo\-Loc}()}\label{namespacegeors_a3a65fd9ccc9e58725c7b9ffbb40081b2}
+
+\item 
+\hypertarget{namespacegeors_ab886686d60b4ac319f24920edbdb2599}{tuple {\bfseries \-\_\-d} = \hyperlink{namespacegeors_abf605583f4b44d3ade8ac9a0a9da63d1}{area}(\-\_\-c,10)}\label{namespacegeors_ab886686d60b4ac319f24920edbdb2599}
+
+\item 
+\hypertarget{namespacegeors_a9da4cdb2d911e48be522d7998e37469a}{tuple {\bfseries \-\_\-e} = \hyperlink{namespacegeors_a250a82f910c096532544fbe6b5a3f808}{distance}(\-\_\-c,\-\_\-d)}\label{namespacegeors_a9da4cdb2d911e48be522d7998e37469a}
+
+\item 
+\hypertarget{namespacegeors_a3c2341af5962793f6c8bb26e0f454b0b}{tuple {\bfseries \-\_\-g} = \hyperlink{classgeors_1_1GeoLoc}{Geo\-Loc}()}\label{namespacegeors_a3c2341af5962793f6c8bb26e0f454b0b}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Name\-: geors.\-py Purpose\-: Geoinformation for D\-E based on opengeodb data and openstreetmap webservice Author\-: \href{mailto:burger@burgerdev.de}{\tt burger@burgerdev.\-de} Created\-: 08.\-01.\-2013 Copyright\-: (c) Markus Döring 2013, plz.\-db is in the public domain (thanks to opengeodb.\-org) full text search results are covered by the Database Contents License (Db\-C\-L) 1.\-0 Licence\-: G\-P\-L3, O\-Db\-L (see openstreetmap.\-org for details) 
+
+\subsection{Function Documentation}
+\hypertarget{namespacegeors_abf605583f4b44d3ade8ac9a0a9da63d1}{\index{geors@{geors}!area@{area}}
+\index{area@{area}!geors@{geors}}
+\subsubsection[{area}]{\setlength{\rightskip}{0pt plus 5cm}def geors.\-area (
+\begin{DoxyParamCaption}
+\item[{}]{loc, }
+\item[{}]{dist}
+\end{DoxyParamCaption}
+)}}\label{namespacegeors_abf605583f4b44d3ade8ac9a0a9da63d1}
+
+
+get surrounding Geo\-Locs 
+
+
+\begin{DoxyParams}{Parameters}
+{\em loc} & a \hyperlink{classgeors_1_1GeoLoc}{Geo\-Loc} obejct to start with \\
+\hline
+{\em dist} & a distance in kilometres to search in \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+a list of Geo\-Locs (aka cities) within the specified radius of loc
+\end{DoxyReturn}
+usage (and doctests)\-:
+
+\begin{quotation}
+\begin{quotation}
+\begin{quotation}
+area(\-None, 0)
+
+g = \hyperlink{classgeors_1_1GeoLoc}{Geo\-Loc}(\mbox{[}87527, \char`\"{}\-Sonthofen\char`\"{}, None, None, \char`\"{}87527\char`\"{}\mbox{]}) L = area(g,0.\-1) len(\-L)
+
+\end{quotation}
+
+
+\end{quotation}
+
+
+\end{quotation}
+1 \begin{quotation}
+\begin{quotation}
+\begin{quotation}
+L\mbox{[}0\mbox{]}.zipcode
+
+\end{quotation}
+
+
+\end{quotation}
+
+
+\end{quotation}
+'87527' \hypertarget{namespacegeors_a250a82f910c096532544fbe6b5a3f808}{\index{geors@{geors}!distance@{distance}}
+\index{distance@{distance}!geors@{geors}}
+\subsubsection[{distance}]{\setlength{\rightskip}{0pt plus 5cm}def geors.\-distance (
+\begin{DoxyParamCaption}
+\item[{}]{loc, }
+\item[{}]{locs}
+\end{DoxyParamCaption}
+)}}\label{namespacegeors_a250a82f910c096532544fbe6b5a3f808}
+
+
+calculate distance between Geo\-Locs 
+
+
+\begin{DoxyParams}{Parameters}
+{\em loc} & a \hyperlink{classgeors_1_1GeoLoc}{Geo\-Loc} obejct to start with \\
+\hline
+{\em locs} & either a \hyperlink{classgeors_1_1GeoLoc}{Geo\-Loc} object or a list of \hyperlink{classgeors_1_1GeoLoc}{Geo\-Loc} objects \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+a float or a list of floats (depending on the input) with the distance in kilometres
+\end{DoxyReturn}
+usage (and doctests)\-:
+
+\begin{quotation}
+\begin{quotation}
+\begin{quotation}
+distance(\-None, None)
+
+distance(\-None, \mbox{[}\-None, None\mbox{]})
+
+\end{quotation}
+
+
+\end{quotation}
+
+
+\end{quotation}
+\mbox{[}None, None\mbox{]} \hypertarget{namespacegeors_a524e72573297cfd02214f0ee5c416330}{\index{geors@{geors}!gcd@{gcd}}
+\index{gcd@{gcd}!geors@{geors}}
+\subsubsection[{gcd}]{\setlength{\rightskip}{0pt plus 5cm}def geors.\-gcd (
+\begin{DoxyParamCaption}
+\item[{}]{lat1, }
+\item[{}]{lon1, }
+\item[{}]{lat2, }
+\item[{}]{lon2, }
+\item[{}]{r = {\ttfamily 6367.5}}
+\end{DoxyParamCaption}
+)}}\label{namespacegeors_a524e72573297cfd02214f0ee5c416330}
+
+
+great circle distance 
+
+compute the great circle distance between two latitude/longitude pairs 
+\begin{DoxyParams}{Parameters}
+{\em lat1} & first latitude \\
+\hline
+{\em lon1} & first longitude \\
+\hline
+{\em lat2} & second latitude \\
+\hline
+{\em lon2} & second longitude \\
+\hline
+{\em r} & radius (defalut\-: earth radius in km)\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+distance between the coordinates, units are the same as in the input 
+\end{DoxyReturn}
