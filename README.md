@@ -17,7 +17,7 @@ This module does only work for **German** zip codes, but extensions are planned.
 Author
 ------
 
-Markus Doering, http://burgerdev.de
+Markus D&ouml;ring, http://burgerdev.de
 
 
 Licence
