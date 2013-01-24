@@ -87,30 +87,31 @@ osm_email = None
 # (as opposed to street addresses and the like). This object prefers German locations
 # at the moment.
 #
-# Basic Usage (and doctests):
-#
-#>>> g = GeoLoc()
-#>>> g.zipcode = "87527"
-#>>> g.complete()
-#>>> g.city
-#'Sonthofen'
-#
-#>>> g = GeoLoc()
-#>>> g.city = "Sonthofen"
-#>>> g.complete()
-#>>> g.zipcode
-#'87527'
-#
-#>>> g = GeoLoc()
-#>>> g.latlon = (47.51, 10.29)
-#>>> g.complete()
-#>>> g.zipcode
-#'87527'
-#>>> g.city
-#'Sonthofen'
-#
 #
 class GeoLoc(object):
+	'''
+	 Basic Usage (and doctests):
+	
+	>>> g = GeoLoc()
+	>>> g.zipcode = "87527"
+	>>> g.complete()
+	>>> g.city
+	'Sonthofen'
+	
+	>>> g = GeoLoc()
+	>>> g.city = "Sonthofen"
+	>>> g.complete()
+	>>> g.zipcode
+	'87527'
+	
+	>>> g = GeoLoc()
+	>>> g.latlon = (47.51, 10.29)
+	>>> g.complete()
+	>>> g.zipcode
+	'87527'
+	>>> g.city
+	'Sonthofen'
+	'''
 
 	## @var city
 	# the city (string, default: None)
@@ -204,7 +205,11 @@ class GeoLoc(object):
 		#return "%s (country=%s, zip=%s, lat=%.2f, lon=%.2f)" % (self.city if self.city is not None else self.county, self.countrycode, self.zipcode, lat, lon)
 
 	## look up GeoLoc information
-	# Complete the geographic information in this GeoLoc object. Works best if the zipcode attribute is filled.
+	# Complete the geographic information in this GeoLoc object. 
+	# At the moment, this works if either
+	#   * the zip code is set or
+	#   * the latitude/longitude pair is set or
+	#   * you are lucky with openstreetmap
 	# @param useosm specify if openstreetmap query should be sent (this feature is experimental!)
 	def complete(self, useosm=False):
 		""" 
@@ -299,15 +304,17 @@ def _osmquery(d={}):
 # @param locs either a GeoLoc object or a list of GeoLoc objects
 # @return a float or a list of floats (depending on the input) with the distance in kilometres
 #	
-# usage (and doctests):
-#
-#>>> distance(None, None)
-#>>>
-#>>> distance(None, [None, None])
-#[None, None]
-#
 def distance(loc, locs):
+	'''
+	usage (and doctests):
 	
+	>>> distance(None, None)
+	>>>
+	>>> distance(None, [None, None])
+	[None, None]
+	
+	'''
+
 	if not isinstance(loc, GeoLoc):
 		return [None for d in locs] if isinstance(locs,Iterable) else None
 	loc.complete()
@@ -330,28 +337,38 @@ def distance(loc, locs):
 	return res
 
 ## get surrounding GeoLocs
+# This function gets surrounding locations for a given location. At the moment, there are a few restrictions to when this
+# function will work as expected:
+#   * one of these is true
+#     * GeoLoc.complete() finds a latitude/longitude pair (see there to check the requirements)
+#     * the input has its latitude/longitude pair GeoLoc.latlon set
+#   * the location is in Germany
 # @param loc a GeoLoc obejct to start with
 # @param dist a distance in kilometres to search in
 # @return a list of GeoLocs (aka cities) within the specified radius of loc
 #	
-# usage (and doctests):
-#
-#>>> area(None, 0)
-#>>> 
-#>>> g = GeoLoc([87527, "Sonthofen", None, None, "87527"])
-#>>> L = area(g,0.1)
-#>>> len(L)
-#1
-#>>> L[0].zipcode
-#'87527'
-#
 def area(loc, dist):
+	'''
+	usage (and doctests):
+
+	>>> area(None, 0)
+	>>> 
+	>>> g = GeoLoc([87527, "Sonthofen", None, None, "87527"])
+	>>> L = area(g,0.1)
+	>>> len(L)
+	1
+	>>> L[0].zipcode
+	'87527'
+	'''
+
 	if not isinstance(loc, GeoLoc):
+
 		return None
 
 	if loc.latlon is None:
 		loc.complete()
-
+	if loc.latlon is None:
+		return None
 	(lat, lon) = loc.latlon
 
 	try:
@@ -371,7 +388,9 @@ def area(loc, dist):
 
 
 if __name__ == "__main__":
-# testing
+	# testing
+	pass
+	'''
 	_a = GeoLoc()
 	_a.zipcode = "69115"
 	_b = GeoLoc()
@@ -398,6 +417,6 @@ if __name__ == "__main__":
 	_g.latlon = (47.5,10.3)
 	_g.complete()
 	print(_g)
-
+	'''
 
 

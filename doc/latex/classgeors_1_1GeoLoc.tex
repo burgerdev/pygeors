@@ -51,63 +51,29 @@ def \hyperlink{classgeors_1_1GeoLoc_ad60e96d584d8aa6039ca7deb533f051e}{complete}
 \subsection{Detailed Description}
 geographic location object 
 
-This object represents a geographic location in terms of zip codes and city limits (as opposed to street addresses and the like). This object prefers German locations at the moment.
+This object represents a geographic location in terms of zip codes and city limits (as opposed to street addresses and the like). This object prefers German locations at the moment.\begin{DoxyVerb} Basic Usage (and doctests):
 
-Basic Usage (and doctests)\-:
-
-\begin{quotation}
-\begin{quotation}
-\begin{quotation}
-g = Geo\-Loc() g.\-zipcode = \char`\"{}87527\char`\"{} g.\-complete() g.\-city
-
-\end{quotation}
-
-
-\end{quotation}
-
-
-\end{quotation}
+>>> g = GeoLoc()
+>>> g.zipcode = "87527"
+>>> g.complete()
+>>> g.city
 'Sonthofen'
 
-\begin{quotation}
-\begin{quotation}
-\begin{quotation}
-g = Geo\-Loc() g.\-city = \char`\"{}\-Sonthofen\char`\"{} g.\-complete() g.\-zipcode
-
-\end{quotation}
-
-
-\end{quotation}
-
-
-\end{quotation}
+>>> g = GeoLoc()
+>>> g.city = "Sonthofen"
+>>> g.complete()
+>>> g.zipcode
 '87527'
 
-\begin{quotation}
-\begin{quotation}
-\begin{quotation}
-g = Geo\-Loc() g.\-latlon = (47.\-51, 10.\-29) g.\-complete() g.\-zipcode
-
-\end{quotation}
-
-
-\end{quotation}
-
-
-\end{quotation}
-'87527' \begin{quotation}
-\begin{quotation}
-\begin{quotation}
-g.\-city
-
-\end{quotation}
-
-
-\end{quotation}
-
-
-\end{quotation}
-'Sonthofen' 
+>>> g = GeoLoc()
+>>> g.latlon = (47.51, 10.29)
+>>> g.complete()
+>>> g.zipcode
+'87527'
+>>> g.city
+'Sonthofen'
+\end{DoxyVerb}
+ 
 
 \subsection{Constructor \& Destructor Documentation}
 \hypertarget{classgeors_1_1GeoLoc_aec420200a480eb3edc214ec6c25c980e}{\index{geors\-::\-Geo\-Loc@{geors\-::\-Geo\-Loc}!\-\_\-\-\_\-init\-\_\-\-\_\-@{\-\_\-\-\_\-init\-\_\-\-\_\-}}
@@ -142,13 +108,18 @@ the constructor
 
 look up \hyperlink{classgeors_1_1GeoLoc}{Geo\-Loc} information Complete the geographic information in this \hyperlink{classgeors_1_1GeoLoc}{Geo\-Loc} object. 
 
-Works best if the zipcode attribute is filled. 
+At the moment, this works if either
+\begin{DoxyItemize}
+\item the zip code is set or
+\item the latitude/longitude pair is set or
+\item you are lucky with openstreetmap 
 \begin{DoxyParams}{Parameters}
 {\em useosm} & specify if openstreetmap query should be sent (this feature is experimental!) \begin{DoxyVerb}\end{DoxyVerb}
  \\
 \hline
 \end{DoxyParams}
 
+\end{DoxyItemize}
 
 The documentation for this class was generated from the following file\-:\begin{DoxyCompactItemize}
 \item 
