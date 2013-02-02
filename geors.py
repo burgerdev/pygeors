@@ -46,6 +46,13 @@ def gcd(lat1, lon1, lat2, lon2, r=6367.5):
 	lon2=radians(float(lon2))
 
 	return r*acos( cos(lat1)*cos(lat2)*cos(lon1-lon2) + sin(lat1)*sin(lat2) )
+
+## get associative arrays aka dicts from sqlite3
+def loc_factory(cursor, row):
+	d = {}
+	for idx, col in enumerate(cursor.description):
+		d[col[0]] = row[idx]
+	return d
 #
 # =======================================
 
@@ -66,8 +73,9 @@ import os.path
 # =======================================
 
 # global connection to zipcode DB 
-_conn = sqlite3.connect(os.path.join(os.path.dirname( __file__ ), 'plz.db'))
+_conn = sqlite3.connect(os.path.join(os.path.dirname( __file__ ), 'zipcode.db'))
 _conn.create_function("GCD", 4, gcd)
+_conn.row_factory = loc_factory
 
 ## openstreetmap user agent
 # set this to your app's name
@@ -145,12 +153,16 @@ class GeoLoc(object):
 		self._query = None
 		self._alternatives = None
 
-		if isinstance(tup, (list, tuple)):
+		#TODO revisit these, can't be correct anymore
+		if tup is None:
+			return
+
+		if "id" in tup.keys():
 			# result from zipcode DB query
-			self._fromtuple(tup)
+			self._fromdbentry(tup)
 		elif isinstance(tup, dict):
 			self._fromdict(tup)
-		elif tup is not None:
+		else:
 			print("Error: Unknown constructor argument")
 
 	def _copyfrom(self, g):
@@ -167,12 +179,12 @@ class GeoLoc(object):
 
 
 			
-	def _fromtuple(self, tup):
+	def _fromdbentry(self, tup):
 		# input is expected to be a result of a database query
-		self.zipcode = tup[4]
-		self.city = tup[1]
+		self.zipcode = tup["zipcode"]
+		self.city = tup["city"]
 		try:
-			self.latlon = (float(tup[2]), float(tup[3]))
+			self.latlon = (float(tup["lat"]), float(tup["lon"]))
 		except TypeError:
 			self.latlon = None
 
@@ -212,29 +224,35 @@ class GeoLoc(object):
 	#   * the zip code is set or
 	#   * the latitude/longitude pair is set or
 	#   * you are lucky with openstreetmap
-	# @param useosm specify if openstreetmap query should be sent (this feature is experimental!)
+	# @param useosm Specify if openstreetmap query should be sent (this feature is experimental!). *Don't forget to set geors.useragent and geors.email correctly!*
 	def complete(self, useosm=False):
 		""" 
 		"""
 		
-		if self.zipcode is not None:
+		if self.zipcode is not None or self.city is not None:
 			self._ziplookup()
 		if (self.city is not None or self._query is not None) and useosm:
-			self._citylookup()
+			self._osmlookup()
 		if self.city is None and self.latlon is not None:
 			self._reverselookup()
 
 	def _ziplookup(self):
 		cur = _conn.cursor()
-		cur.execute("SELECT * FROM geodb_zip WHERE zip = ? LIMIT 1", (self.zipcode,))
+		if self.zipcode is not None:
+			cur.execute("SELECT * FROM zipcode WHERE zipcode = ? LIMIT 1", (self.zipcode,))
+		elif self.city is not None:
+			cur.execute("SELECT * FROM zipcode WHERE city = ? LIMIT 1", (self.city,))
+		else:
+			return
+
 		res = cur.fetchone()
 		if res is not None:
-			self.city = res[1]
-			self.latlon = (float(res[2]), float(res[3]))
-			self.zipcode = res[4]
+			self.city = res["city"]
+			self.latlon = (float(res["lat"]), float(res["lon"]))
+			self.zipcode = res["zipcode"]
 
 
-	def _citylookup(self):
+	def _osmlookup(self):
 		
 		# prepare query parameters
 		p = {}
@@ -262,11 +280,11 @@ class GeoLoc(object):
 
 	def _reverselookup(self):
 		cur = _conn.cursor()
-		cur.execute("SELECT * FROM geodb_zip ORDER BY GCD(lat, lon, ?, ?) ASC LIMIT 1", self.latlon)
+		cur.execute("SELECT * FROM zipcode ORDER BY GCD(lat, lon, ?, ?) ASC LIMIT 1", self.latlon)
 		res = cur.fetchone()
 		if res is not None:
 			temp = self.latlon
-			self._fromtuple(res)
+			self._fromdbentry(res)
 			self.latlon = temp
 
 	def _pprint(self, obj):
@@ -328,8 +346,8 @@ def distance(loc, locs):
 	cur = _conn.cursor() 
 	res = []
 	for zipcode in ziparray:
-		cur.execute("SELECT GCD(lat,lon,?,?) AS dist FROM geodb_zip WHERE zip in (?)", (lat, lon, zipcode))
-		res += [float(d[0]) for d in cur.fetchall()]
+		cur.execute("SELECT GCD(lat,lon,?,?) AS dist FROM zipcode WHERE zipcode=?", (lat, lon, zipcode))
+		res += [float(d["dist"]) for d in cur.fetchall()]
 
 	if len(res) == 0:
 		return None
@@ -355,7 +373,7 @@ def area(loc, dist):
 
 	>>> area(None, 0)
 	>>> 
-	>>> g = GeoLoc([87527, "Sonthofen", None, None, "87527"])
+	>>> g = GeoLoc({'id': 1, 'zipcode': '87527', 'city': 'Sonthofen', 'lat': 47.510178, 'lon':10.289223})
 	>>> L = area(g,0.1)
 	>>> len(L)
 	1
@@ -376,11 +394,11 @@ def area(loc, dist):
 
 	try:
 		cur = _conn.cursor()
-		cur.execute("SELECT * FROM geodb_zip WHERE GCD(lat,lon,?,?) <= ?", (lat, lon, dist))
+		cur.execute("SELECT * FROM zipcode WHERE GCD(lat,lon,?,?) <= ?", (lat, lon, dist))
 	except sqlite3.OperationalError as e:
 		print(e.message)
 		return None
-	res = [GeoLoc(d) for d in cur.fetchall()]
+	res = [GeoLoc(d) for d in cur]
 
 	if len(res) == 0:
 		return None
