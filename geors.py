@@ -201,8 +201,10 @@ class GeoLoc(object):
 
 		lat = self.latlon[0] if self.latlon is not None else 0
 		lon = self.latlon[1] if self.latlon is not None else 0
-		return "%s, %s" % (self.city if self.city is not None else self.county, self.state)
-		#return "%s (country=%s, zip=%s, lat=%.2f, lon=%.2f)" % (self.city if self.city is not None else self.county, self.countrycode, self.zipcode, lat, lon)
+		return "%s (country=%s, zip=%s, lat=%.2f, lon=%.2f)" % (self.city if self.city is not None else self.county, self.countrycode, self.zipcode, lat, lon)
+
+	def toString(self):
+		return "%s, %s%s" % (self.city if self.city is not None else self.county, self.zipcode+", " if self.zipcode is not None else "", self.state)
 
 	## look up GeoLoc information
 	# Complete the geographic information in this GeoLoc object. 
@@ -217,9 +219,9 @@ class GeoLoc(object):
 		
 		if self.zipcode is not None:
 			self._ziplookup()
-		elif self.city is not None or self._query is not None:
+		if (self.city is not None or self._query is not None) and useosm:
 			self._citylookup()
-		elif self.latlon is not None:
+		if self.city is None and self.latlon is not None:
 			self._reverselookup()
 
 	def _ziplookup(self):
@@ -360,6 +362,7 @@ def area(loc, dist):
 	>>> L[0].zipcode
 	'87527'
 	'''
+	
 
 	if not isinstance(loc, GeoLoc):
 
