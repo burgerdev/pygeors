@@ -237,7 +237,9 @@ class GeoLoc(object):
 			self._reverselookup()
 
 	def _ziplookup(self):
-		cur = _conn.cursor()
+		con = sqlite3.connect(os.path.join(os.path.dirname( __file__ ), 'zipcode.db'))
+		con.row_factory = loc_factory
+		cur = con.cursor()
 		if self.zipcode is not None:
 			cur.execute("SELECT * FROM zipcode WHERE zipcode = ? LIMIT 1", (self.zipcode,))
 		elif self.city is not None:
@@ -250,6 +252,7 @@ class GeoLoc(object):
 			self.city = res["city"]
 			self.latlon = (float(res["lat"]), float(res["lon"]))
 			self.zipcode = res["zipcode"]
+			self.state = res["state"]
 
 
 	def _osmlookup(self):
@@ -279,7 +282,10 @@ class GeoLoc(object):
 			self._alternatives = g[1:]
 
 	def _reverselookup(self):
-		cur = _conn.cursor()
+		con = sqlite3.connect(os.path.join(os.path.dirname( __file__ ), 'zipcode.db'))
+		con.row_factory = loc_factory
+		con.create_function("GCD", 4, gcd)
+		cur = con.cursor()
 		cur.execute("SELECT * FROM zipcode ORDER BY GCD(lat, lon, ?, ?) ASC LIMIT 1", self.latlon)
 		res = cur.fetchone()
 		if res is not None:
@@ -342,8 +348,11 @@ def distance(loc, locs):
 	(lat, lon) = loc.latlon
 
 	ziparray = [d.zipcode for d in locs] if isinstance(locs,Iterable) else [locs.zipcode, ]
-	
-	cur = _conn.cursor() 
+				
+	con = sqlite3.connect(os.path.join(os.path.dirname( __file__ ), 'zipcode.db'))
+	con.create_function("GCD", 4, gcd)
+	con.row_factory = loc_factory
+	cur = con.cursor() 
 	res = []
 	for zipcode in ziparray:
 		cur.execute("SELECT GCD(lat,lon,?,?) AS dist FROM zipcode WHERE zipcode=?", (lat, lon, zipcode))
@@ -392,8 +401,12 @@ def area(loc, dist):
 		return None
 	(lat, lon) = loc.latlon
 
+	con = sqlite3.connect(os.path.join(os.path.dirname( __file__ ), 'zipcode.db'))
+	con.create_function("GCD", 4, gcd)
+	con.row_factory = loc_factory
+	cur = con.cursor() 
+	
 	try:
-		cur = _conn.cursor()
 		cur.execute("SELECT * FROM zipcode WHERE GCD(lat,lon,?,?) <= ?", (lat, lon, dist))
 	except sqlite3.OperationalError as e:
 		print(e.message)
