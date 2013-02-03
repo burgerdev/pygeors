@@ -12,6 +12,7 @@ This python module provides a few things related to geospatial information:
 * a function **query** that lets you search for locations
 * a function **distance** that calculates the distance of two GeoLoc-objects
 * a function **area** that returns all regions near a GeoLoc within a specified distance 
+* an sqlite3 database of German communities with hierarchical and geospatial information (probably the most up-to-date database around)
 
 This module does only work for **German** locations, but extensions are planned.
 [Website](http://burgerdev.de/pygeors)
