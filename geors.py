@@ -67,6 +67,13 @@ import os.path
 
 
 
+# =======================================
+# internal imports
+from _localized import lookup
+#
+# =======================================
+
+
 
 # =======================================
 # START GEO FUNCTIONS
@@ -138,9 +145,9 @@ class GeoLoc(object):
 
 
 	## the constructor
-	# @param tup tuple as returned by a query to geodb_zip, or dict as returned by a query to openstreetmap
+	# @param d dict as returned by a query to geodb_zip (EXPERIMENTAL: dict as returned by a query to openstreetmap)
 	#
-	def __init__(self, tup=None):
+	def __init__(self, d=None):
 		self.city = None
 		self.zipcode = None
 		self.county = None
@@ -154,14 +161,14 @@ class GeoLoc(object):
 		self._alternatives = None
 
 		#TODO revisit these, can't be correct anymore
-		if tup is None:
+		if d is None:
 			return
 
-		if "id" in tup.keys():
+		if "id" in d.keys():
 			# result from zipcode DB query
-			self._fromdbentry(tup)
-		elif isinstance(tup, dict):
-			self._fromdict(tup)
+			self._fromdbentry(d)
+		elif isinstance(d, dict):
+			self._fromdict(d)
 		else:
 			print("Error: Unknown constructor argument")
 
@@ -179,14 +186,20 @@ class GeoLoc(object):
 
 
 			
-	def _fromdbentry(self, tup):
-		# input is expected to be a result of a database query
-		self.zipcode = tup["zipcode"]
-		self.city = tup["city"]
+	def _fromdbentry(self, d):
+		# input is expected to be a result of a database query, the fields below should be set
+		self.zipcode = d["zipcode"]
+		self.city = d["city"]
+		self.county = d["county"]
+		self.country = d["country"]
+		self.state = d["state"]
 		try:
-			self.latlon = (float(tup["lat"]), float(tup["lon"]))
+			self.latlon = (float(d["latitude"]), float(d["longitude"]))
 		except TypeError:
 			self.latlon = None
+		except KeyError:
+			#TODO remove hack, use _localized
+			self.latlon = (float(d["lat"]), float(d["lon"]))
 
 	def _fromdict(self, d):
 		# input is expected to be a result from an osm query
@@ -225,18 +238,33 @@ class GeoLoc(object):
 	#   * the latitude/longitude pair is set or
 	#   * you are lucky with openstreetmap
 	# @param useosm Specify if openstreetmap query should be sent (this feature is experimental!). *Don't forget to set geors.useragent and geors.email correctly!*
-	def complete(self, useosm=False):
-		""" 
-		"""
+	# @param deep Do you want precise results?
+	def complete(self, useosm=False, deep=True):
 		
-		if self.zipcode is not None or self.city is not None:
+		if self.zipcode is not None:
+			#TODO should be unified
 			self._ziplookup()
-		if (self.city is not None or self._query is not None) and useosm:
-			self._osmlookup()
+
+		if self.city is not None and deep:
+			if useosm:
+				self._osmlookup()
+			else:
+				self._lookup()
 		if self.city is None and self.latlon is not None:
 			self._reverselookup()
 
+	def _lookup(self):
+		q = self.city if self.city is not None else self.county
+		if q is None or len(q)==0:
+			return
+		if self.state is not None:
+			q += ", " + self.state
+		other = GeoLoc(lookup(q))
+		if other.city is not None:
+			self._copyfrom(other)
+
 	def _ziplookup(self):
+		#TODO will be omitted once zip code search is implemented in _localized
 		con = sqlite3.connect(os.path.join(os.path.dirname( __file__ ), 'zipcode.db'))
 		con.row_factory = loc_factory
 		cur = con.cursor()
@@ -300,6 +328,26 @@ class GeoLoc(object):
 		print("================================")
 		
 
+
+## query the geo database
+# 
+# @param s the query string (format: <city|county>[,<state>] or <zipcode>)
+# @return a GeoLoc object
+def query(s):
+	'''
+	Usage
+
+	>>> g = query('Hindelang')
+	>>> g.city
+	'Bad Hindelang'
+	>>> g.zipcode
+	'87541'
+	>>> g.state
+	'Bayern'
+	'''
+
+	g = GeoLoc(lookup(s))
+	return g
 
 
 def _osmquery(d={}):
@@ -382,7 +430,7 @@ def area(loc, dist):
 
 	>>> area(None, 0)
 	>>> 
-	>>> g = GeoLoc({'id': 1, 'zipcode': '87527', 'city': 'Sonthofen', 'lat': 47.510178, 'lon':10.289223})
+	>>> g = GeoLoc({'id': 1, 'zipcode': '87527', 'city': 'Sonthofen', 'latitude': 47.510178, 'longitude': 10.289223, 'county': 'Oberallgäu', 'state': 'Bayern', 'country': 'Germany'})
 	>>> L = area(g,0.1)
 	>>> len(L)
 	1

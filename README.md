@@ -1,7 +1,7 @@
 pygeors
 =======
 
-Python Radius Search Module
+Python Radius Search Module (Germany, at the moment)
 
 Content
 -------
@@ -9,15 +9,17 @@ Content
 This python module provides a few things related to geospatial information:
 
 * a class **GeoLoc** representing geographic locations
+* a function **query** that lets you search for locations
 * a function **distance** that calculates the distance of two GeoLoc-objects
 * a function **area** that returns all regions near a GeoLoc within a specified distance 
 
-This module does only work for **German** zip codes, but extensions are planned.
+This module does only work for **German** locations, but extensions are planned.
+[Website](http://burgerdev.de/pygeors)
 
 Author
 ------
 
-Markus D&ouml;ring, http://burgerdev.de
+[Markus Döring](http://burgerdev.de)
 
 
 Licence
@@ -38,12 +40,18 @@ The code in geors.py is available under the terms of the GNU General Public Lice
 > You should have received a copy of the GNU General Public License
 > along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-The contents of the sqlite3 database plz.db are provided by <http://opengeodb.org/> and are in the public domain.
+The contents of germany.db and gemeindeverzeichnis.csv are a derived work of the [Gemeindeverzeichnis](https://www.destatis.de/DE/ZahlenFakten/LaenderRegionen/Regionales/Gemeindeverzeichnis/Administrativ/Archiv/Verwaltungsgliederung/Verwalt4QAktuell.html),
+whose copyright owner is the German federal statistic office on behalf of the community of German statistical offices. 
+It may be copied and distributed at will, provided the German federal statistic office is 
+attributed as source.
+
+The contents of zipcode.db are derived from the Gemeindeverzeichnis and 
+data provided by opengeodb.org, which is in the public domain.
 
 
 Thanks
 ------
 
-Thanks to opengeodb.org for providing the geospatial data.
-
+  * opengeodb.org, for providing the geospatial data.
+  * the Federal Republic of Germany, for providing statistical data
 
